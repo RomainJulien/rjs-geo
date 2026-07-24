@@ -74,7 +74,7 @@ export function auditGeo({ site, businesses, services = [], hasArticles, hasProj
         message: `${who}Description très courte (< 40 caractères) : détaille l'activité, les prestations et la zone.`,
       });
     }
-    if (!b.phone && !b.email) {
+    if (!b.phone && !b.phoneHref && !b.email) {
       f.push({
         level: 'warn',
         code: 'contact',
