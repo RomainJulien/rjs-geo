@@ -11,14 +11,27 @@
     "url": "git+https://github.com/RomainJulien/rjs-geo.git"
   },
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
     "./AnswerBlock.astro": "./src/AnswerBlock.astro"
   },
+  "types": "./dist/index.d.ts",
   "files": [
-    "src"
+    "dist",
+    "src/AnswerBlock.astro"
   ],
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc"
+  },
   "peerDependencies": {
     "astro": ">=5",
     "zod": "^3 || ^4"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "zod": "^4.0.0"
   }
 }
