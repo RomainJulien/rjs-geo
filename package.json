@@ -1,0 +1,20 @@
+{
+  "name": "@rjs/geo",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Couche GEO/SEO partagée pour les sites Astro RJS Studio : graphe JSON-LD relié par @id, endpoint llms.txt, schémas Zod, composant AnswerBlock et conseils SEO/GEO au build.",
+  "author": "RJS Studio",
+  "license": "UNLICENSED",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./AnswerBlock.astro": "./src/AnswerBlock.astro"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "astro": ">=5",
+    "zod": "^3 || ^4"
+  }
+}

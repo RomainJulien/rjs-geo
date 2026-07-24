@@ -1,0 +1,55 @@
+---
+/**
+ * Couche GEO partagée — composant <AnswerBlock>. (Générique.)
+ * H2 = question, réponse 40-80 mots auto-portante (nom + ville présents).
+ * Garde-fous = warnings au build.
+ */
+interface Props {
+  question: string;
+  answer?: string;
+  entity?: string;
+  place?: string;
+  as?: 'h2' | 'h3';
+  id?: string;
+  class?: string;
+}
+
+const { question, answer, entity, place, as = 'h2', id, class: className } = Astro.props;
+
+const slug = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
+const anchor = id ?? slug(question);
+const Heading = as;
+
+if (import.meta.env.DEV && answer) {
+  const words = answer.trim().split(/\s+/).filter(Boolean).length;
+  const where = `AnswerBlock « ${question} »`;
+  if (words < 40 || words > 80) {
+    console.warn(`[GEO] ${where} : ${words} mots (viser 40-80 pour un passage citable).`);
+  }
+  const haystack = answer.toLowerCase();
+  if (entity && !haystack.includes(entity.toLowerCase())) {
+    console.warn(`[GEO] ${where} : le nom « ${entity} » n'apparaît pas — attribution perdue hors contexte.`);
+  }
+  if (place && !haystack.includes(place.toLowerCase())) {
+    console.warn(`[GEO] ${where} : la ville/zone « ${place} » n'apparaît pas — ancrage local perdu.`);
+  }
+}
+---
+
+<div class:list={['answer-block', className]} id={anchor}>
+  <Heading class="answer-block__q">{question}</Heading>
+  {answer ? <p class="answer-block__a">{answer}</p> : <div class="answer-block__a"><slot /></div>}
+</div>
+
+<style>
+  .answer-block { margin-block: 1.5rem; }
+  .answer-block__q { scroll-margin-top: 6rem; }
+  .answer-block__a { max-width: 65ch; }
+</style>
