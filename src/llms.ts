@@ -1,4 +1,4 @@
-import type { Site, Business, Service, ArticleRef } from './schemas';
+import type { Site, Business, Service, ArticleRef } from './schemas.js';
 
 /**
  * Couche GEO partagée — génération de `llms.txt` (SUPERSET définitif).

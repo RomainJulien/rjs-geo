@@ -1,4 +1,4 @@
-import type { Site, Business, Service } from './schemas';
+import type { Site, Business, Service } from './schemas.js';
 
 /**
  * Couche GEO partagée — CONSEILS (audit SEO/GEO au build).

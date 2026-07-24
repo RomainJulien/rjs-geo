@@ -8,7 +8,7 @@
  *
  * Composant Astro : importer directement `@rjs/geo/AnswerBlock.astro`.
  */
-export * from './schemas';
-export * from './graph';
-export * from './llms';
-export * from './audit';
+export * from './schemas.js';
+export * from './graph.js';
+export * from './llms.js';
+export * from './audit.js';
