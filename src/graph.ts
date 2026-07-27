@@ -1,4 +1,4 @@
-import type { Site, Business, Service, ArticleRef } from './schemas.js';
+import type { Site, Business, Service, Founder, ArticleRef } from './schemas.js';
 
 /**
  * Couche GEO partagée — graphe JSON-LD relié par @id (SUPERSET définitif).
@@ -6,7 +6,11 @@ import type { Site, Business, Service, ArticleRef } from './schemas.js';
  */
 
 const businessId = (site: Site, b: Business) => `${site.url}/#${b.slug}`;
-const founderId = (site: Site, b: Business) => `${site.url}/#${b.slug}-founder`;
+// Un ou plusieurs founders. Le 1er garde `#slug-founder` (rétrocompat), les
+// suivants sont suffixés `-1`, `-2`…
+const founderId = (site: Site, b: Business, i = 0) => `${site.url}/#${b.slug}-founder${i > 0 ? `-${i}` : ''}`;
+const foundersOf = (b: Business): Founder[] =>
+  !b.founder ? [] : Array.isArray(b.founder) ? b.founder : [b.founder];
 const websiteId = (site: Site) => `${site.url}/#website`;
 const serviceId = (site: Site, s: Service) => `${site.url}/#service-${s.id}`;
 
@@ -17,6 +21,13 @@ function businessNode(site: Site, b: Business, services: readonly Service[], anc
   const areaServed = b.areaServed ?? [];
   const hours = b.hours ?? [];
   const sameAs = b.sameAs ?? [];
+  const founders = foundersOf(b);
+  const founderRef =
+    founders.length === 0
+      ? null
+      : founders.length === 1
+        ? { '@id': founderId(site, b, 0) }
+        : founders.map((_, i) => ({ '@id': founderId(site, b, i) }));
   return {
     '@type': b.type,
     '@id': businessId(site, b),
@@ -60,7 +71,7 @@ function businessNode(site: Site, b: Business, services: readonly Service[], anc
           })),
         }
       : {}),
-    ...(b.founder ? { founder: { '@id': founderId(site, b) } } : {}),
+    ...(founderRef ? { founder: founderRef } : {}),
     ...(anchor && services.length
       ? {
           hasOfferCatalog: {
@@ -77,12 +88,11 @@ function businessNode(site: Site, b: Business, services: readonly Service[], anc
   };
 }
 
-function founderNode(site: Site, b: Business) {
-  const f = b.founder!;
+function founderNode(site: Site, b: Business, f: Founder, i: number) {
   const fSameAs = f.sameAs ?? [];
   return {
     '@type': 'Person',
-    '@id': founderId(site, b),
+    '@id': founderId(site, b, i),
     name: f.name,
     ...(f.jobTitle ? { jobTitle: f.jobTitle } : {}),
     ...(f.phone ? { telephone: f.phone } : {}),
@@ -202,7 +212,7 @@ export function buildGraph({ site, businesses, services = [], extraNodes = [], l
 
   const entityNodes = [
     ...businesses.map((b) => businessNode(site, b, services, b.slug === anchor.slug)),
-    ...businesses.filter((b) => b.founder).map((b) => founderNode(site, b)),
+    ...businesses.flatMap((b) => foundersOf(b).map((f, i) => founderNode(site, b, f, i))),
     websiteNode(site, anchor, locale),
     ...serviceNodes(site, services, anchor),
   ];

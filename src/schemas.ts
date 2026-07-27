@@ -65,7 +65,8 @@ export const BusinessSchema = z.object({
   priceRange: z.string().min(1).optional(),
   areaServed: z.array(AreaSchema).default([]),
   sameAs: z.array(z.string().url()).default([]),
-  founder: FounderSchema.optional(),
+  /** Un·e fondateur·rice, ou plusieurs (co-fondateurs). */
+  founder: z.union([FounderSchema, z.array(FounderSchema).min(1)]).optional(),
   logo: z.string().url().optional(),
   /** SIRET/SIREN — devient un identifier PropertyValue. */
   siret: z.string().min(1).optional(),
