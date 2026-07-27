@@ -66,7 +66,12 @@ export function buildLlmsTxt({
       lines.push('');
       lines.push(`### ${b.name}`);
     }
-    if (b.founder) lines.push(`- Interlocuteur : ${b.founder.name}${b.founder.jobTitle ? ` (${b.founder.jobTitle})` : ''}`);
+    const founders = !b.founder ? [] : Array.isArray(b.founder) ? b.founder : [b.founder];
+    if (founders.length) {
+      lines.push(
+        `- Interlocuteur : ${founders.map((f) => `${f.name}${f.jobTitle ? ` (${f.jobTitle})` : ''}`).join(', ')}`,
+      );
+    }
     if (b.phone) lines.push(`- Téléphone : ${b.phone}`);
     if (b.email) lines.push(`- Email : ${b.email}`);
     if (b.address) {

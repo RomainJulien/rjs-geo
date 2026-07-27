@@ -129,7 +129,8 @@ export function buildArticleNode(opts: { site: Site; business: Business; article
   const { site, business, article, path } = opts;
   const date =
     article.pubDate instanceof Date ? article.pubDate.toISOString() : new Date(article.pubDate).toISOString();
-  const authorIsFounder = business.founder && article.author === business.founder.name;
+  // Si l'auteur de l'article correspond à un·e des founders → on le relie par @id.
+  const authorIdx = foundersOf(business).findIndex((f) => f.name === article.author);
   return {
     '@type': 'BlogPosting',
     '@id': `${site.url}${path}#article`,
@@ -137,8 +138,8 @@ export function buildArticleNode(opts: { site: Site; business: Business; article
     description: article.description,
     datePublished: date,
     inLanguage: 'fr-FR',
-    author: authorIsFounder
-      ? { '@id': founderId(site, business) }
+    author: authorIdx >= 0
+      ? { '@id': founderId(site, business, authorIdx) }
       : { '@type': 'Person', name: article.author ?? business.name },
     publisher: { '@id': businessId(site, business) },
     mainEntityOfPage: `${site.url}${path}`,
