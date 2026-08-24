@@ -98,6 +98,13 @@ export function auditGeo({ site, businesses, services = [], hasArticles, hasProj
       if (!b.siret) {
         f.push({ level: 'info', code: 'siret', message: `${who}Pas de SIRET/SIREN : un identifiant officiel fiabilise l'entité aux yeux de Google.` });
       }
+      if (!b.rating) {
+        f.push({
+          level: 'info',
+          code: 'rating',
+          message: `${who}Pas d'avis déclarés (rating) : Google n'affiche pas d'étoiles pour un avis auto-déclaré sur un LocalBusiness, mais ça reste un signal de confiance pour les IA — vaut le coup si le client a de vrais avis Google à reprendre.`,
+        });
+      }
     }
   }
 

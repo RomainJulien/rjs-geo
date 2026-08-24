@@ -46,6 +46,31 @@ export const FounderSchema = z.object({
   sameAs: z.array(z.string().url()).default([]),
 });
 
+/** Un avis client. `date` accepte AAAA-MM (précision au mois, cas Google Maps qui
+ * n'affiche que des dates relatives) ou AAAA-MM-JJ si le jour exact est connu. */
+export const ReviewSchema = z.object({
+  author: z.string().min(1),
+  date: z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/, 'Format AAAA-MM ou AAAA-MM-JJ attendu'),
+  rating: z.number().min(1).max(5),
+  text: z.string().min(1),
+});
+
+/**
+ * Note moyenne + avis d'une entité. Champ `reviews` optionnel : `value`/`count`
+ * seuls suffisent à émettre un `AggregateRating` sans le détail des avis.
+ *
+ * ⚠️ Un `aggregateRating` déclaré ici sur un LocalBusiness n'affiche PAS
+ * d'étoiles dans les résultats Google (politique anti « self-serving reviews »,
+ * en vigueur depuis septembre 2019) — Google ignore ce balisage pour ce type
+ * d'entité. L'intérêt reste réel : cohérence de l'entité pour le Knowledge
+ * Graph, et citation par les IA (GEO), pas le rich snippet.
+ */
+export const AggregateRatingSchema = z.object({
+  value: z.number().min(1).max(5),
+  count: z.number().int().min(1),
+  reviews: z.array(ReviewSchema).default([]),
+});
+
 export const BusinessSchema = z.object({
   slug: z.string().regex(/^[a-z0-9-]+$/),
   primary: z.boolean().default(false),
@@ -70,6 +95,8 @@ export const BusinessSchema = z.object({
   logo: z.string().url().optional(),
   /** SIRET/SIREN — devient un identifier PropertyValue. */
   siret: z.string().min(1).optional(),
+  /** Note moyenne + avis. Voir AggregateRatingSchema pour la limite Google. */
+  rating: AggregateRatingSchema.optional(),
 });
 
 export const SiteSchema = z.object({
@@ -101,6 +128,8 @@ export type Address = z.infer<typeof AddressSchema>;
 export type Area = z.infer<typeof AreaSchema>;
 export type OpeningHours = z.infer<typeof OpeningHoursSchema>;
 export type Founder = z.infer<typeof FounderSchema>;
+export type Review = z.infer<typeof ReviewSchema>;
+export type AggregateRating = z.infer<typeof AggregateRatingSchema>;
 export type Business = z.infer<typeof BusinessSchema>;
 export type Site = z.infer<typeof SiteSchema>;
 export type Service = z.infer<typeof ServiceSchema>;

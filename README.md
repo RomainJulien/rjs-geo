@@ -1,7 +1,7 @@
 # @rjs/geo
 
 Couche **GEO/SEO** partagée pour les sites Astro de RJS Studio. Développée une
-fois, éprouvée sur **7 sites en production** et 7 métiers différents.
+fois, éprouvée sur **10 sites en production** et autant de métiers différents.
 
 Elle produit, à partir des données d'un site :
 
@@ -70,6 +70,7 @@ export const GET = () => {
 | Zones desservies | typées `City` / `AdministrativeArea` / `State` / `Country` |
 | Horaires | par jour (`hours[]` → `OpeningHoursSpecification`) |
 | Identité | `logo`, `siret` (→ `identifier`), `alternateName` |
+| Avis clients | `rating: { value, count, reviews[] }` → `aggregateRating` + `review[]` (⚠️ Google n'affiche pas d'étoiles pour un LocalBusiness auto-déclaré depuis 2019 — l'intérêt est GEO/Knowledge Graph, pas le rich snippet) |
 | Blog | `buildArticleNode` (BlogPosting) + section llms « Articles » |
 | Portfolio | `buildProjectNode` (CreativeWork daté/localisé) + section « Réalisations » |
 | Bilingue | paramètre `locale` (`inLanguage` du WebSite), `data/site.ts` par langue |
@@ -88,6 +89,13 @@ les affiche. À appeler dans l'endpoint `llms.txt` (s'exécute une fois au build
 
 ## Distribution
 
-Publier en **npm privé** (ou GitHub Packages), puis `npm i @rjs/geo` sur chaque
-site et remplacer les imports `../geo/…` par `@rjs/geo`. Les 7 sites actuels ont
-chacun une copie locale de `src/geo/` (≈ ce package) à migrer progressivement.
+Repo public sur GitHub (aucune donnée client dedans — uniquement la mécanique) :
+`npm install github:RomainJulien/rjs-geo`. Aucun token requis, ça marche aussi
+sur Netlify (le script `prepare` recompile `dist/` à l'installation). Les 10
+sites actuels consomment tous le package de cette façon — plus de copie locale.
+
+## Pièges connus (retours d'expérience)
+
+Voir `GEO-TUTO.md` (racine de `WORKS AGENCE/`), section « Leçons apprises » :
+cannibalisation home/page-ville-siège, quasi-duplication de contenu sur des
+pages villes templatées, distances approximatives, cohérence NAP visible.

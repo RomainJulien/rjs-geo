@@ -72,6 +72,28 @@ function businessNode(site: Site, b: Business, services: readonly Service[], anc
         }
       : {}),
     ...(founderRef ? { founder: founderRef } : {}),
+    ...(b.rating
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: b.rating.value,
+            reviewCount: b.rating.count,
+            bestRating: 5,
+            worstRating: 1,
+          },
+          ...(b.rating.reviews.length
+            ? {
+                review: b.rating.reviews.map((r) => ({
+                  '@type': 'Review',
+                  author: { '@type': 'Person', name: r.author },
+                  datePublished: r.date,
+                  reviewRating: { '@type': 'Rating', ratingValue: r.rating, bestRating: 5, worstRating: 1 },
+                  reviewBody: r.text,
+                })),
+              }
+            : {}),
+        }
+      : {}),
     ...(anchor && services.length
       ? {
           hasOfferCatalog: {
