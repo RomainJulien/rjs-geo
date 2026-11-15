@@ -1,8 +1,8 @@
 {
   "name": "@rjs/geo",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
-  "description": "Couche GEO/SEO partagée pour les sites Astro RJS Studio : graphe JSON-LD relié par @id, endpoint llms.txt, schémas Zod, composant AnswerBlock et conseils SEO/GEO au build.",
+  "description": "Couche GEO/SEO partagée pour les sites Astro RJS Studio : graphe JSON-LD relié par @id, endpoint llms.txt, schémas Zod, composant AnswerBlock et conseils SEO/GEO au build, garde-fou du HTML généré au build et plugin Netlify IndexNow.",
   "author": "RJS Studio",
   "license": "UNLICENSED",
   "private": true,
@@ -15,11 +15,20 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./AnswerBlock.astro": "./src/AnswerBlock.astro"
+    "./AnswerBlock.astro": "./src/AnswerBlock.astro",
+    "./integration": {
+      "types": "./dist/integration.d.ts",
+      "import": "./dist/integration.js"
+    },
+    "./scan": {
+      "types": "./dist/scan.d.ts",
+      "import": "./dist/scan.js"
+    }
   },
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
+    "netlify-plugin",
     "src/AnswerBlock.astro"
   ],
   "scripts": {
@@ -31,6 +40,7 @@
     "zod": "^3 || ^4"
   },
   "devDependencies": {
+    "@types/node": "^22.20.5",
     "typescript": "^5.6.0",
     "zod": "^4.0.0"
   }

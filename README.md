@@ -99,3 +99,14 @@ sites actuels consomment tous le package de cette façon — plus de copie local
 Voir `GEO-TUTO.md` (racine de `WORKS AGENCE/`), section « Leçons apprises » :
 cannibalisation home/page-ville-siège, quasi-duplication de contenu sur des
 pages villes templatées, distances approximatives, cohérence NAP visible.
+
+
+## 0.2.0 : garde-fou au build + IndexNow automatique
+
+- `@rjs/geo/integration` : intégration Astro qui analyse `dist/` à la fin du build
+  (4 signaux d'indexation, meta, alt, pièges GEO-TUTO §12 n°1, 2 et 4).
+  `rjsGeo({ strict: true })` fait échouer le build sur un problème bloquant.
+- `netlify-plugin/` : après chaque déploiement de production, envoie à IndexNow
+  les seules pages modifiées (clé lue dans `public/<clé>.txt`).
+
+Mode d'emploi complet : `GEO-TUTO.md` §13.

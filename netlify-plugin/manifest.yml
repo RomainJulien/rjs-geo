@@ -1,0 +1,5 @@
+name: rjs-indexnow
+inputs:
+  - name: dryRun
+    description: Affiche les URL qui seraient envoyées sans appeler IndexNow.
+    default: false
