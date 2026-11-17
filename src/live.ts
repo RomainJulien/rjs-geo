@@ -28,8 +28,15 @@ async function getOnce(url: string): Promise<{ code: number; final: string; body
   }
 }
 
-/** Premier saut seulement : (code, location). */
+/** Premier saut seulement : (code, location), avec un nouvel essai sur erreur réseau. */
 async function hop(url: string): Promise<{ code: number; location: string }> {
+  const r = await hopOnce(url);
+  if (r.code !== 0) return r;
+  await new Promise((ok) => setTimeout(ok, 2000));
+  return hopOnce(url);
+}
+
+async function hopOnce(url: string): Promise<{ code: number; location: string }> {
   try {
     const r = await fetch(url, { method: 'HEAD', redirect: 'manual', headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(15000) });
     return { code: r.status, location: r.headers.get('location') ?? '' };
@@ -91,6 +98,7 @@ export async function checkLive(site: LiveSite, opts: LiveOptions = {}): Promise
       else break;
     }
     if (code === 0 && cur === v) continue; // variante non servie (DNS absent) : pas bloquant
+    if (code === 0) { warn.push(`${v} : redirection non suivie jusqu'au bout (erreur réseau sur ${cur}), à revérifier`); continue; }
     if (norm(cur) !== norm(origin)) pb.push(`${v} aboutit à ${cur} (attendu : ${origin})`);
     else if ([302, 307].includes(code)) warn.push(`${v} : redirection temporaire, préférer 301`);
   }
