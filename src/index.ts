@@ -6,9 +6,14 @@
  * mécanique ; chaque site écrit un petit `data/site.ts` (ou un adaptateur qui
  * mappe ses données existantes) vers les schémas ci-dessous.
  *
- * Composant Astro : importer directement `@rjs/geo/AnswerBlock.astro`.
+ * Composants Astro : `@rjs/geo/SeoHead.astro`, `RjsCredit.astro`, `Faq.astro`,
+ * `AnswerBlock.astro` (importer directement).
  */
 export * from './schemas.js';
 export * from './graph.js';
 export * from './llms.js';
 export * from './audit.js';
+export * from './config.js';
+export * from './robots.js';
+export { scanDist, reportScan, readPages, type ScanFinding, type ScanOptions } from './scan.js';
+export { checkLive, type LiveSite, type LiveResult } from './live.js';

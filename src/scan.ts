@@ -26,12 +26,23 @@ export type ScanOptions = {
   maxDescription?: number;
   /** Seuil de similarité (0 à 1) au-delà duquel deux pages sont jugées quasi identiques. */
   duplicateThreshold?: number;
+  /** Longueur max des <title> (défaut 65, simple conseil ; 60 avec rjs.config). */
+  maxTitle?: number;
+  /**
+   * Gravité d'un title ou d'une description trop longs. Absent (anciens sites) :
+   * description en ⚠️, title en simple conseil. Avec rjs.config : `block` par défaut.
+   */
+  lengthLevel?: ScanLevel;
+  /** URL attendue du lien « Site réalisé par RJS Studio » (contrôle ignoré si absent). */
+  creditUrl?: string;
 };
 
 type Page = {
   file: string; url: string; canonical?: string; title: string; description?: string;
-  noindex: boolean; imgNoAlt: number; links: string[]; text: string; jsonld: unknown[];
+  noindex: boolean; imgNoAlt: number; links: string[]; text: string; jsonld: unknown[]; h1: number;
 };
+
+export type { Page as ScannedPage };
 
 const IGNORED_LINK = /\.(pdf|jpe?g|png|webp|avif|gif|svg|ico|xml|txt|json|mp4|webm|zip)$/i;
 
@@ -80,6 +91,7 @@ function parse(distDir: string, file: string, origin: string): Page {
     file, url: servedUrl(distDir, file, origin), canonical: canon ? attr(canon, 'href') : undefined, title,
     description: desc ? decode(attr(desc, 'content') ?? '') : undefined,
     noindex: !!robots && /noindex/i.test(attr(robots, 'content') ?? ''), imgNoAlt, links, text, jsonld,
+    h1: tags(/<h1\b/gi).length,
   };
 }
 
@@ -129,12 +141,19 @@ function findNodes(data: unknown, pred: (n: Node) => boolean, out: Node[] = []):
 
 const add = (m: Map<string, Set<string>>, k: string, v: string) => { (m.get(k) ?? m.set(k, new Set()).get(k)!).add(v); };
 
+/** Pages HTML de dist/ (hors 404), analysées. */
+export function readPages(distDir: string, site: string): Page[] {
+  const origin = site.replace(/\/+$/, '');
+  return walk(distDir).filter((p) => !/(^|\/)404(\.html|\/index\.html)$/.test(p.split(sep).join('/'))).map((p) => parse(distDir, p, origin));
+}
+
 export function scanDist(distDir: string, opts: ScanOptions): ScanFinding[] {
   const origin = opts.site.replace(/\/+$/, '');
   const root = origin + '/';
   const maxDesc = opts.maxDescription ?? 160;
+  const maxTitle = opts.maxTitle ?? 65;
   const f: ScanFinding[] = [];
-  const pages = walk(distDir).filter((p) => !/(^|\/)404(\.html|\/index\.html)$/.test(p.split(sep).join('/'))).map((p) => parse(distDir, p, origin));
+  const pages = readPages(distDir, origin);
   const byUrl = new Map(pages.map((p) => [p.url, p]));
   const sitemap = sitemapUrls(distDir);
   const inSitemap = new Set(sitemap ?? []);
@@ -197,16 +216,41 @@ export function scanDist(distDir: string, opts: ScanOptions): ScanFinding[] {
   const noDesc = indexable.filter((p) => !p.description);
   if (noDesc.length) f.push({ level: 'warn', code: 'desc-missing', message: `${noDesc.length} page(s) sans meta description.`, urls: noDesc.map((p) => p.url) });
   const longD = indexable.filter((p) => (p.description?.length ?? 0) > maxDesc);
-  if (longD.length) f.push({ level: 'warn', code: 'desc-long', message: `${longD.length}/${indexable.length} meta descriptions > ${maxDesc} caractères (tronquées par Google et Bing).`, urls: longD.map((p) => `${p.url} (${p.description!.length})`) });
-  const longT = indexable.filter((p) => p.title.length > 65);
-  if (longT.length) f.push({ level: 'info', code: 'title-long', message: `${longT.length} <title> > 65 caractères.`, urls: longT.map((p) => `${p.url} (${p.title.length})`) });
+  if (longD.length) f.push({ level: opts.lengthLevel ?? 'warn', code: 'desc-long', message: `${longD.length}/${indexable.length} meta descriptions > ${maxDesc} caractères (tronquées par Google et Bing).`, urls: longD.map((p) => `${p.url} (${p.description!.length})`) });
+  const longT = indexable.filter((p) => p.title.length > maxTitle);
+  if (longT.length) f.push({ level: opts.lengthLevel ?? 'info', code: 'title-long', message: `${longT.length}/${indexable.length} <title> > ${maxTitle} caractères (tronqués dans les résultats).`, urls: longT.map((p) => `${p.url} (${p.title.length})`) });
+  const noTitle = indexable.filter((p) => !p.title);
+  if (noTitle.length) f.push({ level: 'block', code: 'title-missing', message: `${noTitle.length} page(s) sans <title>.`, urls: noTitle.map((p) => p.url) });
+  const badH1 = indexable.filter((p) => p.h1 !== 1);
+  if (badH1.length) f.push({ level: 'warn', code: 'h1', message: `${badH1.length} page(s) sans H1 unique (zéro ou plusieurs).`, urls: badH1.map((p) => `${p.url} (${p.h1} H1)`) });
+  const dash = indexable.filter((p) => p.title.includes('—') || p.description?.includes('—'));
+  if (dash.length) f.push({ level: 'info', code: 'emdash', message: `${dash.length} title ou description avec un tiret cadratin (à remplacer par une virgule ou deux-points).`, urls: dash.map((p) => p.url) });
   const alt = pages.reduce((n, p) => n + p.imgNoAlt, 0);
   if (alt) f.push({ level: 'warn', code: 'alt', message: `${alt} image(s) sans attribut alt.`, urls: pages.filter((p) => p.imgNoAlt).map((p) => `${p.url} (${p.imgNoAlt})`) });
   const thin = indexable.filter((p) => p.text.split(' ').length < 150);
   if (thin.length) f.push({ level: 'info', code: 'thin', message: `${thin.length} page(s) de moins de 150 mots visibles.`, urls: thin.map((p) => p.url) });
 
+  // FAQ balisée (FAQPage) mais questions absentes du texte visible : Google l'interdit.
+  const norm = (t: string) => decode(t).replace(/[’‘]/g, "'").replace(/\s+/g, ' ').trim().toLowerCase();
+  const faqHidden: string[] = [];
+  for (const p of indexable) {
+    const qs = findNodes(p.jsonld, (n) => n['@type'] === 'Question' && typeof n.name === 'string').map((n) => n.name as string);
+    if (!qs.length) continue;
+    const visible = norm(p.text);
+    const miss = qs.filter((q) => !visible.includes(norm(q)));
+    if (miss.length) faqHidden.push(`${p.url} : « ${miss[0]} »${miss.length > 1 ? ` et ${miss.length - 1} autre(s)` : ''}`);
+  }
+  if (faqHidden.length) f.push({ level: 'warn', code: 'faq-visible', message: `${faqHidden.length} page(s) dont la FAQ balisée (FAQPage) n'est pas affichée telle quelle : même liste pour l'affichage et le JSON-LD (composant <Faq>).`, urls: faqHidden });
+
   // GEO-TUTO §12, pièges n°4 (NAP visible) et n°1 (commune du siège)
   const home = byUrl.get(root);
+  // Lien « Site réalisé par RJS Studio » vers la bonne page métier.
+  if (opts.creditUrl && home) {
+    const strip = (u: string) => u.replace(/[?#].*$/, '').replace(/\/+$/, '');
+    const credits = home.links.filter((h) => /^https?:\/\/(www\.)?romainjulien\.studio(\/|$)/i.test(h));
+    if (!credits.length) f.push({ level: 'warn', code: 'credit', message: `Pas de lien « Site réalisé par RJS Studio » sur l'accueil (composant <RjsCredit>, ou rjs.credit: false si le client l'a refusé).` });
+    else if (!credits.some((h) => strip(h) === strip(opts.creditUrl!))) f.push({ level: 'warn', code: 'credit-target', message: `Le lien RJS Studio pointe vers ${credits[0]} au lieu de ${opts.creditUrl} (page métier du site).` });
+  }
   const biz = home ? findNodes(home.jsonld, (n) => !!n.address && n['@type'] !== 'PostalAddress' && typeof n.address === 'object')[0] : undefined;
   if (biz) {
     const visible = pages.map((p) => p.text).join(' ');
@@ -240,9 +284,9 @@ export function scanDist(distDir: string, opts: ScanOptions): ScanFinding[] {
 
 export function reportScan(siteName: string, findings: ScanFinding[], maxUrls = 5): void {
   const icon = { block: '❌', warn: '⚠️ ', info: '· ' } as const;
-  if (!findings.length) { console.log(`\n✅ Garde-fou build — ${siteName} : HTML généré cohérent.\n`); return; }
+  if (!findings.length) { console.log(`\n✅ Garde-fou build, ${siteName} : HTML généré cohérent.\n`); return; }
   const n = (l: ScanLevel) => findings.filter((x) => x.level === l).length;
-  console.log(`\n🛡️  Garde-fou build — ${siteName}  (${n('block')} bloquant(s), ${n('warn')} à corriger, ${n('info')} à envisager)`);
+  console.log(`\n🛡️  Garde-fou build : ${siteName}  (${n('block')} bloquant(s), ${n('warn')} à corriger, ${n('info')} à envisager)`);
   for (const level of ['block', 'warn', 'info'] as const) for (const x of findings.filter((y) => y.level === level)) {
     console.log(`   ${icon[level]} ${x.message}`);
     for (const u of (x.urls ?? []).slice(0, maxUrls)) console.log(`        ${u}`);

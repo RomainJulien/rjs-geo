@@ -1,8 +1,8 @@
 {
   "name": "@rjs/geo",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "type": "module",
-  "description": "Couche GEO/SEO partagée pour les sites Astro RJS Studio : graphe JSON-LD relié par @id, endpoint llms.txt, schémas Zod, composant AnswerBlock et conseils SEO/GEO au build, garde-fou du HTML généré au build et plugin Netlify IndexNow.",
+  "description": "Pack SEO/GEO partagé des sites Astro RJS Studio : config unique par site (defineSite), <SeoHead>, graphe JSON-LD relié par @id, robots.txt, llms.txt, sitemap, redirections, lien RJS Studio, garde-fou au build, plugin Netlify IndexNow et CLI de contrôle (rjs-geo check).",
   "author": "RJS Studio",
   "license": "UNLICENSED",
   "private": true,
@@ -15,6 +15,9 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./SeoHead.astro": "./src/SeoHead.astro",
+    "./RjsCredit.astro": "./src/RjsCredit.astro",
+    "./Faq.astro": "./src/Faq.astro",
     "./AnswerBlock.astro": "./src/AnswerBlock.astro",
     "./integration": {
       "types": "./dist/integration.d.ts",
@@ -23,13 +26,15 @@
     "./scan": {
       "types": "./dist/scan.d.ts",
       "import": "./dist/scan.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
     "netlify-plugin",
-    "src/AnswerBlock.astro"
+    "src/*.astro",
+    "src/virtual.d.ts"
   ],
   "scripts": {
     "build": "tsc",
@@ -43,5 +48,8 @@
     "@types/node": "^22.20.5",
     "typescript": "^5.6.0",
     "zod": "^4.0.0"
+  },
+  "bin": {
+    "rjs-geo": "./dist/cli.js"
   }
 }

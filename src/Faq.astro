@@ -1,0 +1,34 @@
+---
+/**
+ * @rjs/geo : FAQ affichée ET balisée depuis la même liste, donc jamais de
+ * divergence entre le texte visible et le JSON-LD FAQPage (Google l'exige).
+ * <details> natifs, aucun JavaScript, aucun style imposé : classes
+ * rjs-faq, rjs-faq-i, rjs-faq-q, rjs-faq-r à styler côté site (:global).
+ *
+ *   <Faq items={[{ q: 'Intervenez-vous à Lannion ?', r: 'Oui, …' }]} />
+ */
+import config from 'virtual:rjs-geo/config';
+import { buildFaqNode, type QA } from '../dist/graph.js';
+
+interface Props {
+  items: readonly QA[];
+  class?: string;
+  /** `false` si la page met déjà la FAQ dans son graphe (prop `schema` de SeoHead). */
+  schema?: boolean;
+  /** Première question ouverte. */
+  openFirst?: boolean;
+}
+
+const { items, class: className, schema = true, openFirst = false } = Astro.props;
+const node = schema && config ? buildFaqNode({ site: config.site, items, path: Astro.url.pathname.replace(/\.html$/, '') || '/' }) : null;
+---
+
+<div class:list={['rjs-faq', className]}>
+  {items.map((i, n) => (
+    <details class="rjs-faq-i" open={openFirst && n === 0}>
+      <summary class="rjs-faq-q">{i.q}</summary>
+      <p class="rjs-faq-r">{i.r}</p>
+    </details>
+  ))}
+</div>
+{node && <script is:inline type="application/ld+json" set:html={JSON.stringify({ '@context': 'https://schema.org', ...node })} />}

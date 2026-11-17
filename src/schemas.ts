@@ -138,7 +138,7 @@ export function parseOrThrow<T>(schema: z.ZodType<T>, data: unknown, label: stri
   const result = schema.safeParse(data);
   if (!result.success) {
     const issues = result.error.issues
-      .map((i) => `  · ${i.path.join('.') || '(racine)'} — ${i.message}`)
+      .map((i) => `  · ${i.path.join('.') || '(racine)'} : ${i.message}`)
       .join('\n');
     throw new Error(`[GEO] Données « ${label} » invalides :\n${issues}`);
   }
