@@ -228,3 +228,29 @@ Dans `~/.config/rjs-geo/` :
   valable pour toutes les propriétés du compte.
 
 Variables possibles : `RJS_GOOGLE_SA` (chemin d'une clé de compte de service), `RJS_BING_KEY` (clé).
+
+
+## 0.5.0 : citations et liens
+
+Les liens qui comptent pour un artisan : des **citations** (fiches identiques
+dans Apple Plans, Bing Places, PagesJaunes, annuaires du métier) et de **vrais
+liens locaux** (mairie, office de tourisme, fournisseurs, partenaires, presse).
+Rien n'est acheté, rien n'est relié artificiellement entre sites clients.
+
+| Commande | Rôle |
+|---|---|
+| `citations <id> [--famille f]` | kit Markdown dans le dossier du client : fiche NAP à recopier (lue dans le JSON-LD du site, sans rien inventer), descriptions courte et longue, annuaires adaptés au métier (essentiels, ensuite, sous condition), modèle de courriel pour les liens partenaires |
+| `links add <id> <url> --source "Annuaire"` | suit une page qui fait un lien vers le site |
+| `links <id\|all>` | vérifie que chaque page existe et contient toujours le lien ; `check` le signale aussi |
+| `sitemaps <id> [--remove <url>]` | sitemaps déclarés dans Search Console, avec les obsolètes (http, www, doublons, page déclarée par erreur) ; retrait sur demande |
+
+Familles : `batiment`, `taxi`, `hebergement`, `bien-etre`, `services`,
+`commerce`, déduites du métier RJS ou du type schema.org (`--famille` pour forcer).
+La liste des annuaires est dans `src/citations.ts` (`DIRECTORIES`) : une ligne à
+ajouter pour un nouvel annuaire ou un nouveau métier.
+
+Ce qui reste manuel, une fois par client et avec lui : la création des comptes
+(SMS ou courrier de vérification, CAPTCHA, conditions d'utilisation).
+
+Bing (`status`) n'a pas encore de données de liens pour les propriétés importées
+en novembre 2026 : le suivi `links` ne dépend pas de lui.

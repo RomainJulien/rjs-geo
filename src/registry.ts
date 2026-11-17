@@ -20,6 +20,8 @@ export type RegistrySite = {
   credit?: boolean;
   notes?: string;
   launch?: Record<string, string>;
+  /** Liens obtenus suivis par `links` (annuaires, partenaires…). */
+  links?: { url: string; source?: string; added: string; status?: 'ok' | 'perdu' | 'injoignable'; checked?: string }[];
 };
 export type Registry = { _doc?: string; github?: string; sites: RegistrySite[] };
 

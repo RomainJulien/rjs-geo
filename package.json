@@ -1,8 +1,8 @@
 {
   "name": "@rjs/geo",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "type": "module",
-  "description": "Pack SEO/GEO partagé des sites Astro RJS Studio : config unique par site (defineSite), <SeoHead>, graphe JSON-LD relié par @id, robots.txt, llms.txt, sitemap, redirections, lien RJS Studio, garde-fou au build, plugin Netlify IndexNow et CLI rjs-geo (init, check, launch Google/Bing/IndexNow, status, outils de portefeuille).",
+  "description": "Pack SEO/GEO partagé des sites Astro RJS Studio : config unique par site (defineSite), <SeoHead>, graphe JSON-LD relié par @id, robots.txt, llms.txt, sitemap, redirections, lien RJS Studio, garde-fou au build, plugin Netlify IndexNow et CLI rjs-geo (init, check, launch Google/Bing/IndexNow, status, kit citations, suivi des liens, sitemaps, outils de portefeuille).",
   "author": "RJS Studio",
   "license": "UNLICENSED",
   "private": true,
