@@ -71,7 +71,7 @@ async function main() {
         for (let i = 0; i < sites.length; i += 4) results.push(...(await Promise.all(sites.slice(i, i + 4).map((s) => checkLive(s)))));
         results.forEach((x, i) => { const t = formatLive(x, sites[i].host, quiet); if (t) console.log(t); });
         const ok = results.filter((x) => x.ok).length;
-        console.log(`\n${ok}/${results.length} site(s) sans problème bloquant.`);
+        console.log(`\n${ok}/${results.length} sites sans problème bloquant.`);
         return ok === results.length ? 0 : 1;
       }
       return checkBuild();
