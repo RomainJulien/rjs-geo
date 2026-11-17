@@ -11,7 +11,15 @@ export type LiveSite = { id?: string; host: string; indexnowKey?: string; credit
 export type LiveResult = { ok: boolean; site: string; urls: number; problems: string[]; warnings: string[] };
 export type LiveOptions = { maxTitle?: number; maxDescription?: number };
 
+/** GET avec un nouvel essai sur erreur réseau ou 5xx (un raté ponctuel ne doit pas sortir en ❌). */
 async function get(url: string): Promise<{ code: number; final: string; body: string }> {
+  const r = await getOnce(url);
+  if (r.code !== 0 && r.code < 500) return r;
+  await new Promise((ok) => setTimeout(ok, 2000));
+  return getOnce(url);
+}
+
+async function getOnce(url: string): Promise<{ code: number; final: string; body: string }> {
   try {
     const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(20000) });
     return { code: r.status, final: r.url, body: r.ok ? await r.text() : '' };
