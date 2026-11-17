@@ -119,7 +119,9 @@ export async function status(s: RegistrySite) {
       else {
         const links = await bing.links(site.Url).catch(() => undefined);
         const total = links?.Links?.reduce((t, l) => t + l.Count, 0);
-        console.log(`   Bing : ${site.Url} ${site.IsVerified ? 'vérifiée' : 'NON vérifiée'}${links ? `, liens entrants : ${total} sur la 1re page (${links.TotalPages} page(s))` : ''}`);
+        const linkInfo = !links ? '' : links.TotalPages ? `, liens entrants vus par Bing : ${total} (1re page sur ${links.TotalPages})` : ', liens entrants : pas encore de données Bing';
+        console.log(`   Bing : ${site.Url} ${site.IsVerified ? 'vérifiée' : 'NON vérifiée'}${linkInfo}`);
+        if (s.links?.length) console.log(`   Liens suivis : ${s.links.length} (./rjs links ${s.id} pour les vérifier)`);
       }
     } catch (e) { console.log(`   Bing : ${(e as Error).message}`); }
   }

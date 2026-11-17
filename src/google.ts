@@ -93,6 +93,10 @@ export class SearchConsole {
     return this.call<void>('PUT', `/sites/${encodeURIComponent(property)}/sitemaps/${encodeURIComponent(feed)}`);
   }
 
+  deleteSitemap(property: string, feed: string) {
+    return this.call<void>('DELETE', `/sites/${encodeURIComponent(property)}/sitemaps/${encodeURIComponent(feed)}`);
+  }
+
   async sitemaps(property: string) {
     type S = { path: string; lastSubmitted?: string; lastDownloaded?: string; isPending?: boolean; errors?: string; warnings?: string; contents?: { type: string; submitted?: string }[] };
     return (await this.call<{ sitemap?: S[] }>('GET', `/sites/${encodeURIComponent(property)}/sitemaps`)).sitemap ?? [];

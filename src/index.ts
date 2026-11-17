@@ -19,3 +19,4 @@ export { scanDist, reportScan, readPages, type ScanFinding, type ScanOptions } f
 export { checkLive, type LiveSite, type LiveResult } from './live.js';
 export { SearchConsole, searchConsole } from './google.js';
 export { BingWebmaster } from './bing.js';
+export * from './citations.js';

@@ -12,6 +12,8 @@ import { list, indexnow, versions, sync, conseils, newkey, packageVersion } from
 import { launch, status } from './launch.js';
 import { init } from './init.js';
 import { googleLogin } from './google.js';
+import { citations, sitemaps } from './kit.js';
+import { addLink, linksReport, checkLinks } from './links.js';
 
 const HELP = `rjs-geo ${packageVersion()} : pack SEO/GEO RJS Studio
 
@@ -25,6 +27,10 @@ Portefeuille (registre : --registry sites.json ou RJS_REGISTRY)
   check <id|all> [--quiet]        contrôle en production
   launch <id> [--force]           contrôle, puis Google + Bing + IndexNow (mise en ligne)
   status <id|all>                 état Search Console et Bing (sitemaps, vérification, liens)
+  citations <id> [--famille f]    kit citations (fiche NAP + annuaires du métier) dans le dossier du client
+  links <id|all>                  vérifie les liens obtenus (annuaires, partenaires)
+  links add <id> <url> [--source "PagesJaunes"]   ajoute un lien à suivre
+  sitemaps <id> [--remove <url>]  sitemaps déclarés dans Search Console, retrait d'un sitemap obsolète
   indexnow <id|all> [URL …]       envoie le sitemap (ou ces URL) à IndexNow
   versions                        version de @rjs/geo de chaque site
   conseils <id|all>               build propre local + conseils et garde-fou
@@ -69,6 +75,11 @@ async function main() {
         const sites = pick(r, args[0]);
         const results = [];
         for (let i = 0; i < sites.length; i += 4) results.push(...(await Promise.all(sites.slice(i, i + 4).map((s) => checkLive(s)))));
+        for (const [i, s] of sites.entries()) {
+          if (!s.links?.length) continue;
+          const lost = (await checkLinks(s)).filter((l) => l.status === 'perdu');
+          if (lost.length) results[i].warnings.push(`${lost.length} lien(s) obtenu(s) disparu(s) : ${lost.map((l) => l.source ?? l.url).join(', ')}`);
+        }
         results.forEach((x, i) => { const t = formatLive(x, sites[i].host, quiet); if (t) console.log(t); });
         const ok = results.filter((x) => x.ok).length;
         console.log(`\n${ok}/${results.length} sites sans problème bloquant.`);
@@ -84,6 +95,30 @@ async function main() {
       return 0;
     }
     case 'google-login': await googleLogin(); return 0;
+    case 'citations': {
+      const famille = flag('--famille');
+      const out = flag('--out');
+      const { file, reg: r } = reg();
+      await citations(file, pick(r, args[0])[0], { family: famille || undefined, out: out || undefined });
+      return 0;
+    }
+    case 'links': {
+      const { file, reg: r } = reg();
+      if (args[0] === 'add') {
+        const source = flag('--source');
+        if (!args[1] || !args[2]) throw new Error('Usage : links add <site> <adresse de la page> [--source "Annuaire"]');
+        addLink(file, r, pick(r, args[1])[0], args[2], source || undefined);
+        return 0;
+      }
+      await linksReport(file, r, pick(r, args[0]));
+      return 0;
+    }
+    case 'sitemaps': {
+      const remove = flag('--remove');
+      const { reg: r } = reg();
+      await sitemaps(pick(r, args[0])[0], remove || undefined);
+      return 0;
+    }
     case 'list': list(reg().reg, args[0]); return 0;
     case 'launch': {
       if (!args[0] || args[0] === 'all') throw new Error('launch se fait site par site : rjs-geo launch <id>');
