@@ -5,10 +5,10 @@ import { join, relative, sep } from 'node:path';
  * Garde-fou au build : analyse le HTML GÉNÉRÉ (dist/) d'un site Astro.
  *
  * Complète `auditGeo` (qui regarde les DONNÉES) en vérifiant le RÉSULTAT :
- * - les 4 signaux du playbook indexation (`audit-indexation-seo.md`) :
+ * - les 4 signaux d'indexation (GUIDE.md §6) :
  *   URL servie (200) == canonical == entrée sitemap == liens internes ;
  * - noindex, title/description (longueur, doublons), images sans alt ;
- * - pièges GEO-TUTO §12 détectables automatiquement :
+ * - pièges des pages villes détectables automatiquement (GUIDE.md §8) :
  *   n°1 cannibalisation home / page de la commune du siège,
  *   n°2 pages quasi identiques (templates [ville] peu différenciés),
  *   n°4 NAP du JSON-LD absent du texte visible.
@@ -242,7 +242,7 @@ export function scanDist(distDir: string, opts: ScanOptions): ScanFinding[] {
   }
   if (faqHidden.length) f.push({ level: 'warn', code: 'faq-visible', message: `${faqHidden.length} page(s) dont la FAQ balisée (FAQPage) n'est pas affichée telle quelle : même liste pour l'affichage et le JSON-LD (composant <Faq>).`, urls: faqHidden });
 
-  // GEO-TUTO §12, pièges n°4 (NAP visible) et n°1 (commune du siège)
+  // GUIDE.md §8, pièges 4 (NAP visible) et 1 (commune du siège)
   const home = byUrl.get(root);
   // Lien « Site réalisé par RJS Studio » vers la bonne page métier.
   if (opts.creditUrl && home) {
@@ -259,17 +259,17 @@ export function scanDist(distDir: string, opts: ScanOptions): ScanFinding[] {
     const miss: string[] = [];
     if (cp && !visible.replace(/\s/g, '').includes(String(cp))) miss.push(`code postal ${cp}`);
     if (tel.length >= 9 && !visible.replace(/\D/g, '').includes(tel.slice(-9))) miss.push(`téléphone ${biz.telephone}`);
-    if (miss.length) f.push({ level: 'warn', code: 'nap-visible', message: `NAP du JSON-LD absent du texte visible : ${miss.join(', ')} (GEO-TUTO §12 piège n°4).` });
+    if (miss.length) f.push({ level: 'warn', code: 'nap-visible', message: `NAP du JSON-LD absent du texte visible : ${miss.join(', ')} (GUIDE.md §8, piège 4).` });
     const slug = String(biz.address.addressLocality ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     if (slug) {
       // Segment = "<ville>" ou "<métier>-<ville>" (un seul mot devant) : évite « saint-saturnin-les-apt » pour Apt.
       const isSiege = (seg: string) => seg === slug || (seg.endsWith('-' + slug) && !seg.slice(0, -slug.length - 1).includes('-'));
       const siege = indexable.filter((p) => p.url !== root && isSiege(new URL(p.url).pathname.replace(/\/$/, '').split('/').pop()!));
-      if (siege.length) f.push({ level: 'warn', code: 'cannibalisation', message: `Page dédiée à la commune du siège (${biz.address.addressLocality}) : elle concurrence la home (GEO-TUTO §12 piège n°1). Vérifier qu'aucune indexation n'est en cours avant de corriger.`, urls: siege.map((p) => p.url) });
+      if (siege.length) f.push({ level: 'warn', code: 'cannibalisation', message: `Page dédiée à la commune du siège (${biz.address.addressLocality}) : elle concurrence la home (GUIDE.md §8, piège 1). Vérifier qu'aucune indexation n'est en cours avant de corriger.`, urls: siege.map((p) => p.url) });
     }
   }
 
-  // GEO-TUTO §12 piège n°2 : quasi-doublons
+  // GUIDE.md §8, piège 2 : quasi-doublons
   const th = opts.duplicateThreshold ?? 0.8;
   const sh = indexable.map((p) => ({ p, s: shingles(p.text) }));
   const pairs: string[] = [];
@@ -277,7 +277,7 @@ export function scanDist(distDir: string, opts: ScanOptions): ScanFinding[] {
     const sim = jaccard(sh[i].s, sh[j].s);
     if (sim >= th) pairs.push(`${sh[i].p.url} ≈ ${sh[j].p.url} (${Math.round(sim * 100)} %)`);
   }
-  if (pairs.length) f.push({ level: 'warn', code: 'near-duplicate', message: `${pairs.length} paire(s) de pages quasi identiques (≥ ${Math.round(th * 100)} %) : risque de filtrage par Google (GEO-TUTO §12 piège n°2). Le correctif est du contenu local réel.`, urls: pairs });
+  if (pairs.length) f.push({ level: 'warn', code: 'near-duplicate', message: `${pairs.length} paire(s) de pages quasi identiques (≥ ${Math.round(th * 100)} %) : risque de filtrage par Google (GUIDE.md §8, piège 2). Le correctif est du contenu local réel.`, urls: pairs });
 
   return f;
 }
