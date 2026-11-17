@@ -67,7 +67,8 @@ function parse(distDir: string, file: string, origin: string): Page {
   const desc = metas.find((t) => /name\s*=\s*["']description["']/i.test(t));
   const robots = metas.find((t) => /name\s*=\s*["']robots["']/i.test(t));
   const title = decode((html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '').trim());
-  const imgNoAlt = tags(/<img\b[^>]*>/gi).filter((t) => !/\balt\s*=/i.test(t)).length;
+  // `alt` sans valeur (HTML minifié de alt="") = image décorative, valide.
+  const imgNoAlt = tags(/<img\b[^>]*>/gi).filter((t) => !/\salt(?=[\s=>\/])/i.test(t)).length;
   const links = tags(/<a\b[^>]*>/gi).map((t) => attr(t, 'href')).filter((h): h is string => !!h);
   const jsonld: unknown[] = [];
   for (const m of html.matchAll(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
@@ -174,6 +175,8 @@ export function scanDist(distDir: string, opts: ScanOptions): ScanFinding[] {
     const target = `${origin}${u.pathname}`;
     if (u.host !== host) { add(wrongForm, `${u.origin}${u.pathname}`, p.url); continue; }
     if (byUrl.has(target) || redirects.has(target) || redirects.has(target.replace(/\/$/, ''))) continue;
+    // Fichier non-HTML généré par un endpoint (contact.vcf, flux RSS…) : présent dans dist/, donc pas cassé.
+    try { const f = join(distDir, decodeURIComponent(u.pathname)); if (existsSync(f) && statSync(f).isFile()) continue; } catch { /* chemin invalide */ }
     const other = target.endsWith('/') ? target.slice(0, -1) : target + '/';
     add(byUrl.has(other) ? wrongForm : broken, target, p.url);
   }
