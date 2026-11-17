@@ -215,10 +215,16 @@ Un champ « À COMPLÉTER » laissé dans `rjs.config` bloque le build dès que 
 
 ### Accès aux APIs (une seule fois, jamais dans un dépôt)
 
-- `~/.config/rjs-geo/google-service-account.json` : clé JSON d'un compte de
-  service Google Cloud (API « Google Search Console » activée). Ajouter son
-  adresse comme **propriétaire** de chaque propriété Search Console.
-- `~/.config/rjs-geo/bing-api-key.txt` : clé API Bing Webmaster (Paramètres >
-  Accès API), valable pour toutes les propriétés du compte.
+Dans `~/.config/rjs-geo/` :
 
-Variables possibles à la place : `RJS_GOOGLE_SA` (chemin), `RJS_BING_KEY` (clé).
+- **Google (recommandé : OAuth en ton nom)** : `google-oauth-client.json`, client
+  OAuth « Application de bureau » d'un projet Google Cloud où l'API Google Search
+  Console est activée (écran de consentement en type **Interne**). Puis une fois :
+  `rjs-geo google-login` (navigateur, ton compte). Le CLI accède alors à toutes
+  tes propriétés Search Console, sans rien à faire par site. Alternative si
+  l'organisation l'autorise : `google-service-account.json` (clé de compte de
+  service, à ajouter comme propriétaire de chaque propriété).
+- **Bing** : `bing-api-key.txt`, clé API Bing Webmaster (Paramètres > Accès API),
+  valable pour toutes les propriétés du compte.
+
+Variables possibles : `RJS_GOOGLE_SA` (chemin d'une clé de compte de service), `RJS_BING_KEY` (clé).

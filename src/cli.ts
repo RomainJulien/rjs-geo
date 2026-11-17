@@ -11,6 +11,7 @@ import { registryPath, loadRegistry, pick } from './registry.js';
 import { list, indexnow, versions, sync, conseils, newkey, packageVersion } from './ops.js';
 import { launch, status } from './launch.js';
 import { init } from './init.js';
+import { googleLogin } from './google.js';
 
 const HELP = `rjs-geo ${packageVersion()} : pack SEO/GEO RJS Studio
 
@@ -30,8 +31,9 @@ Portefeuille (registre : --registry sites.json ou RJS_REGISTRY)
   sync [id|all]                   git pull --rebase des copies locales
   newkey <id>                     nouvelle clé IndexNow
 
-Accès aux APIs (une fois, hors dépôts) :
-  ~/.config/rjs-geo/google-service-account.json   ~/.config/rjs-geo/bing-api-key.txt`;
+Accès aux APIs (une fois, hors dépôts, dans ~/.config/rjs-geo/) :
+  google-oauth-client.json puis  rjs-geo google-login     (ou google-service-account.json)
+  bing-api-key.txt`;
 
 const args = process.argv.slice(2);
 const flag = (name: string) => {
@@ -81,6 +83,7 @@ async function main() {
       else init(process.cwd(), opts);
       return 0;
     }
+    case 'google-login': await googleLogin(); return 0;
     case 'list': list(reg().reg, args[0]); return 0;
     case 'launch': {
       if (!args[0] || args[0] === 'all') throw new Error('launch se fait site par site : rjs-geo launch <id>');

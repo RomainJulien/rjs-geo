@@ -1,8 +1,8 @@
 import { checkLive, formatLive, sitemapUrls } from './live.js';
 import { indexnow } from './ops.js';
-import { SearchConsole } from './google.js';
+import { searchConsole } from './google.js';
 import { BingWebmaster } from './bing.js';
-import { googleServiceAccount, bingKey, GOOGLE_SA_FILE, BING_KEY_FILE } from './creds.js';
+import { bingKey, BING_KEY_FILE } from './creds.js';
 import { type Registry, type RegistrySite, saveRegistry } from './registry.js';
 
 /**
@@ -32,14 +32,13 @@ export async function launch(file: string, reg: Registry, s: RegistrySite, opts:
   }
 
   // Google
-  const sa = googleServiceAccount();
-  if (!sa) todo.push(`Google : clé du compte de service absente (${GOOGLE_SA_FILE}).`);
+  const { gsc, missing } = searchConsole();
+  if (!gsc) todo.push(`Google : ${missing}.`);
   else {
     try {
-      const gsc = new SearchConsole(sa);
       const prop = await gsc.propertyFor(h);
       if (!prop) {
-        todo.push(`Google : ajoute ${gsc.email} comme propriétaire de la propriété ${h.replace(/^www\./, '')} (Search Console > Paramètres > Utilisateurs et autorisations), puis relance.`);
+        todo.push(`Google : aucune propriété Search Console pour ${h} accessible à ${gsc.who}. Crée-la (propriété de domaine) ou ajoute ${gsc.who} comme propriétaire de la propriété ${h.replace(/^www\./, '')} (Search Console > Paramètres > Utilisateurs et autorisations), puis relance.`);
       } else {
         await gsc.submitSitemap(prop.siteUrl, sitemap);
         done.google = today();
@@ -94,13 +93,12 @@ export async function launch(file: string, reg: Registry, s: RegistrySite, opts:
 /** État de l'indexation côté Google et Bing (lecture seule). */
 export async function status(s: RegistrySite) {
   console.log(`════ ${s.id} (${s.host}) ════`);
-  const sa = googleServiceAccount();
-  if (!sa) console.log(`   Google : clé absente (${GOOGLE_SA_FILE})`);
+  const { gsc, missing } = searchConsole();
+  if (!gsc) console.log(`   Google : ${missing}`);
   else {
     try {
-      const gsc = new SearchConsole(sa);
       const prop = await gsc.propertyFor(s.host);
-      if (!prop) console.log(`   Google : aucune propriété accessible (ajouter ${gsc.email} comme propriétaire)`);
+      if (!prop) console.log(`   Google : aucune propriété accessible à ${gsc.who}`);
       else {
         const maps = await gsc.sitemaps(prop.siteUrl);
         if (!maps.length) console.log(`   Google : ${prop.siteUrl}, aucun sitemap soumis`);
