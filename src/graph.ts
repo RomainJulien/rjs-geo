@@ -98,7 +98,7 @@ function businessNode(site: Site, b: Business, services: readonly Service[], anc
       ? {
           hasOfferCatalog: {
             '@type': 'OfferCatalog',
-            name: `Prestations — ${b.name}`,
+            name: `Prestations de ${b.name}`,
             itemListElement: services.map((s) => ({
               '@type': 'Offer',
               itemOffered: { '@id': serviceId(site, s) },
@@ -248,5 +248,44 @@ export function buildGraph({ site, businesses, services = [], extraNodes = [], l
   return {
     '@context': 'https://schema.org',
     '@graph': [...entityNodes, ...pageNodes],
+  };
+}
+
+/* ─── Nœuds de page courants ────────────────────────────────────────────── */
+
+export type QA = { q: string; r: string };
+
+/** Absolu depuis un chemin de page (`/` = racine, sans doublon de slash). */
+const pageUrl = (site: Site, path: string) => `${site.url.replace(/\/+$/, '')}${path === '/' ? '/' : path}`;
+
+/**
+ * Nœud FAQPage. Les questions doivent AUSSI être visibles sur la page (le
+ * garde-fou le vérifie) : utiliser la même liste pour l'affichage, ou le
+ * composant `<Faq>` qui fait les deux.
+ */
+export function buildFaqNode(opts: { site: Site; items: readonly QA[]; path: string }) {
+  const { site, items, path } = opts;
+  return {
+    '@type': 'FAQPage',
+    '@id': `${pageUrl(site, path)}#faq`,
+    mainEntity: items.map((i) => ({
+      '@type': 'Question',
+      name: i.q,
+      acceptedAnswer: { '@type': 'Answer', text: i.r },
+    })),
+  };
+}
+
+/** Fil d'Ariane (BreadcrumbList), l'accueil est ajouté en tête. */
+export function buildBreadcrumbNode(opts: { site: Site; items: readonly { name: string; path: string }[]; homeLabel?: string }) {
+  const { site, items, homeLabel = 'Accueil' } = opts;
+  return {
+    '@type': 'BreadcrumbList',
+    itemListElement: [{ name: homeLabel, path: '/' }, ...items].map((it, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: it.name,
+      item: pageUrl(site, it.path),
+    })),
   };
 }

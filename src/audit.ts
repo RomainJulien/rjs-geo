@@ -51,14 +51,14 @@ export function auditGeo({ site, businesses, services = [], hasArticles, hasProj
       f.push({
         level: 'info',
         code: 'founder',
-        message: `${who}Pas de founder (Person) : nommer le dirigeant/artisan renforce l'E-E-A-T — le visage humain derrière la marque, très lu par les IA.`,
+        message: `${who}Pas de founder (Person) : nommer le dirigeant/artisan renforce l'E-E-A-T : le visage humain derrière la marque, très lu par les IA.`,
       });
     }
     if (!same.length) {
       f.push({
         level: 'warn',
         code: 'sameas',
-        message: `${who}Aucun sameAs : relie l'entité à sa fiche Google Business et ses réseaux — clé pour que l'IA reconnaisse l'entreprise.`,
+        message: `${who}Aucun sameAs : relie l'entité à sa fiche Google Business et ses réseaux, clé pour que l'IA reconnaisse l'entreprise.`,
       });
     } else if (!hasGBP(same)) {
       f.push({
@@ -102,7 +102,7 @@ export function auditGeo({ site, businesses, services = [], hasArticles, hasProj
         f.push({
           level: 'info',
           code: 'rating',
-          message: `${who}Pas d'avis déclarés (rating) : Google n'affiche pas d'étoiles pour un avis auto-déclaré sur un LocalBusiness, mais ça reste un signal de confiance pour les IA — vaut le coup si le client a de vrais avis Google à reprendre.`,
+          message: `${who}Pas d'avis déclarés (rating) : Google n'affiche pas d'étoiles pour un avis auto-déclaré sur un LocalBusiness, mais ça reste un signal de confiance pour les IA, et ça vaut le coup si le client a de vrais avis Google à reprendre.`,
         });
       }
     }
@@ -116,7 +116,7 @@ export function auditGeo({ site, businesses, services = [], hasArticles, hasProj
       level: 'info',
       code: 'content',
       message:
-        "Aucun contenu propriétaire (articles ou réalisations datées) : c'est la matière que l'IA ne peut synthétiser ailleurs — le vrai différenciateur GEO.",
+        "Aucun contenu propriétaire (articles ou réalisations datées) : c'est la matière que l'IA ne peut synthétiser ailleurs, le vrai différenciateur GEO.",
     });
   }
 
@@ -129,11 +129,11 @@ export function reportGeoAudit(site: Site, findings: Finding[]): void {
   const infos = findings.filter((x) => x.level === 'info');
 
   if (!findings.length) {
-    console.log(`\n✅ GEO/SEO — ${site.name} : rien à signaler, tout y est.\n`);
+    console.log(`\n✅ GEO/SEO, ${site.name} : rien à signaler, tout y est.\n`);
     return;
   }
 
-  console.log(`\n🔍 GEO/SEO — conseils pour ${site.name}  (${warns.length} à corriger, ${infos.length} à envisager)`);
+  console.log(`\n🔍 GEO/SEO : conseils pour ${site.name}  (${warns.length} à corriger, ${infos.length} à envisager)`);
   for (const x of warns) console.log(`   ⚠️  ${x.message}`);
   for (const x of infos) console.log(`   ·  ${x.message}`);
   console.log('');

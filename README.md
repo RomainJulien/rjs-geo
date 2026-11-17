@@ -110,3 +110,89 @@ pages villes templatées, distances approximatives, cohérence NAP visible.
   les seules pages modifiées (clé lue dans `public/<clé>.txt`).
 
 Mode d'emploi complet : `GEO-TUTO.md` §13.
+
+
+## 0.3.0 : le pack complet, piloté par un seul fichier
+
+Les sites ≤ 0.2 continuent de marcher tels quels (`rjsGeo()` sans config =
+garde-fou seul, mêmes seuils qu'avant). La migration se fait site par site.
+
+### Nouveau site (ou migration) : 1 fichier + 3 branchements
+
+```ts
+// src/rjs.config.ts : LA config SEO/GEO du site
+import { defineSite } from '@rjs/geo';
+export default defineSite({
+  site: { name, url, description, ogImage },
+  businesses: [/* comme avant (BusinessSchema) */],
+  services: [/* … */],
+  live: false,                       // false = en préparation : noindex + robots qui interdit tout
+  rjs: { metier: 'couvreur' },       // lien RJS Studio vers la page métier
+  indexing: { indexnowKey: '…' },    // la clé est servie toute seule (plus de public/<clé>.txt)
+  llms: { keyPages: [/* … */] },
+  // seo: { maxTitle: 60, maxDescription: 155, lengths: 'block', aiBots: 'allow' }  (valeurs par défaut)
+});
+```
+
+```js
+// astro.config.mjs
+import rjsGeo from '@rjs/geo/integration';
+import site from './src/rjs.config.ts';
+export default defineConfig({ site: site.site.url, integrations: [rjsGeo({ site })] });
+```
+
+```astro
+---
+import SeoHead from '@rjs/geo/SeoHead.astro';      // dans le <head> du layout
+import RjsCredit from '@rjs/geo/RjsCredit.astro';  // dans le footer
+import Faq from '@rjs/geo/Faq.astro';              // FAQ visible + FAQPage, même liste
+---
+<SeoHead title="Couvreur à Lannion" description="…" schema={[breadcrumb]} />
+<RjsCredit class="credit" />
+<Faq items={faq} />
+```
+
+```toml
+# netlify.toml (inchangé)
+[[plugins]]
+package = "./node_modules/@rjs/geo/netlify-plugin"
+```
+
+### Ce que l'intégration fait alors toute seule
+
+| Quoi | Comment |
+|---|---|
+| robots.txt | servi depuis la config (robots des IA autorisés, tout interdit si `live: false`) |
+| llms.txt | servi depuis la config |
+| Clé IndexNow | `/<clé>.txt` servi si `indexing.indexnowKey` |
+| Sitemap | écrit depuis les pages indexables générées, si `@astrojs/sitemap` est absent |
+| Redirections | `*.netlify.app` → domaine (prod, site lancé) et `/page.html` → `/page/` |
+| Conseils données | `auditGeo` à chaque build (plus besoin de l'appeler dans llms.txt) |
+| Garde-fou | strict par défaut : title > 60 et description > 155 bloquent, H1 unique, FAQ balisée visible, lien RJS présent et vers la bonne page, tiret cadratin |
+
+Un fichier du site (`public/robots.txt`, `src/pages/llms.txt.ts`…) reste
+prioritaire : le pack ne l'écrase pas, il le signale.
+
+`<SeoHead>` calcule la canonical dans la forme servie par Netlify (`/page` en
+format `file`, `/page/` en format `directory`), applique le gabarit de title,
+pose noindex hors lancement, Open Graph, Twitter, balises de vérification
+Search Console et Bing, et le graphe JSON-LD (prop `graph` pour fournir le
+sien, `schema` pour ajouter des nœuds de page). Helpers : `buildFaqNode`,
+`buildBreadcrumbNode`.
+
+### Checklist en ligne de commande
+
+```
+npx rjs-geo check                                   # dernier build, mêmes règles qu'au build
+npx rjs-geo check --live www.exemple.fr --key <clé>  # le site en production
+npx rjs-geo check --registry sites.json all --quiet  # tout le portefeuille (tâche du lundi)
+```
+
+Code de sortie 1 s'il reste un problème bloquant. Le contrôle en production
+est le portage de `rjs check` (RJS-OPS/rjs.py), avec les seuils du pack.
+
+### Pages métiers connues (lien RJS Studio)
+
+`METIER_PAGES` dans `src/config.ts` : couvreur (zingueur, charpentier), taxi
+(vtc), gite (location-saisonniere), artisan. Un métier inconnu pointe vers
+l'accueil (signalé au build). Ajouter une ligne à chaque nouvelle page métier.

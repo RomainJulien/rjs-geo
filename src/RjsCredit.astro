@@ -1,0 +1,24 @@
+---
+/**
+ * @rjs/geo : lien « Site réalisé par RJS Studio » vers la page métier de
+ * romainjulien.studio déclarée dans rjs.config (`rjs.metier`), sinon l'accueil.
+ * Ancre de marque, jamais de mot-clé : un lien de pied de page sur tous les
+ * sites avec une ancre « création site couvreur » ressemble à un schéma de liens.
+ * Rien n'est affiché si `rjs.credit: false`.
+ */
+import config from 'virtual:rjs-geo/config';
+import { creditUrl } from '../dist/config.js';
+
+interface Props {
+  class?: string;
+  /** Métier imposé (sinon celui de la config). */
+  metier?: string;
+  label?: string;
+}
+
+const { class: className, metier, label = 'Site réalisé par RJS Studio' } = Astro.props;
+const show = config?.rjs.credit ?? true;
+const href = creditUrl(metier ?? config?.rjs.metier);
+---
+
+{show && <a href={href} class={className} target="_blank" rel="noopener">{label}</a>}

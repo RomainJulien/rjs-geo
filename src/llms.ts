@@ -100,8 +100,8 @@ export function buildLlmsTxt({
   if (realisations.length) {
     lines.push('## Réalisations');
     for (const r of realisations) {
-      const meta = [r.city, r.date ? ymd(r.date) : null].filter(Boolean).join(' — ');
-      lines.push(`- [${r.title}](${abs(site.url, r.href)})${meta ? ` — ${meta}` : ''}`);
+      const meta = [r.city, r.date ? ymd(r.date) : null].filter(Boolean).join(', ');
+      lines.push(`- [${r.title}](${abs(site.url, r.href)})${meta ? ` (${meta})` : ''}`);
     }
     lines.push('');
   }
@@ -109,7 +109,7 @@ export function buildLlmsTxt({
   if (articles.length) {
     lines.push('## Articles');
     for (const a of articles) {
-      lines.push(`- [${a.title}](${site.url}${blogBase}/${a.slug}) — ${ymd(a.pubDate)} : ${a.description}`);
+      lines.push(`- [${a.title}](${site.url}${blogBase}/${a.slug}) (${ymd(a.pubDate)}) : ${a.description}`);
     }
     lines.push('');
   }

@@ -1,0 +1,88 @@
+---
+/**
+ * @rjs/geo : tout le SEO d'une page dans le <head>, piloté par rjs.config.
+ * title (gabarit de la config), description, canonical (forme servie par
+ * Netlify, calculée), robots (noindex si demandé ou si le site n'est pas
+ * lancé), Open Graph et Twitter, vérification Search Console et Bing, graphe
+ * JSON-LD du site + nœuds de la page.
+ *
+ *   <head>
+ *     <meta charset="UTF-8" /> …
+ *     <SeoHead title="Couvreur à Lannion" description="…" schema={[breadcrumb]} />
+ *   </head>
+ */
+import config from 'virtual:rjs-geo/config';
+import { buildGraph } from '../dist/graph.js';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Canonical imposée (sinon calculée depuis l'URL de la page). */
+  canonical?: string;
+  /** Image de partage propre à la page (chemin ou URL), sinon celle du site. */
+  ogImage?: string;
+  ogType?: 'website' | 'article';
+  noindex?: boolean;
+  /** Nœuds JSON-LD propres à la page (FAQ, fil d'Ariane, article…), ajoutés au graphe du site. */
+  schema?: object | object[];
+  /** Graphe JSON-LD complet fourni par le site (remplace celui du pack), ou `false` pour n'en émettre aucun. */
+  graph?: object | false;
+  /** `true` : le title est utilisé tel quel, sans gabarit. */
+  rawTitle?: boolean;
+}
+
+if (!config) throw new Error("@rjs/geo <SeoHead> : passer la config du site à l'intégration, rjsGeo({ site }) dans astro.config.");
+const { site, seo, indexing, live } = config;
+const {
+  title,
+  description = site.description,
+  canonical,
+  ogImage = site.ogImage,
+  ogType = 'website',
+  noindex = false,
+  schema,
+  graph,
+  rawTitle = false,
+} = Astro.props;
+
+const origin = site.url.replace(/\/+$/, '');
+// Forme servie par Netlify : format `file` → /page, format `directory` → /page/.
+let path = Astro.url.pathname.replace(/\.html$/, '').replace(/\/index$/, '/');
+if (path !== '/') {
+  path = path.replace(/\/+$/, '');
+  if (config._format === 'directory') path += '/';
+}
+const canonicalURL = canonical ?? `${origin}${path}`;
+const fullTitle =
+  rawTitle || title.includes(site.name) ? title : seo.titleTemplate.replace('%s', title).replace('{name}', site.name);
+const image = ogImage ? (ogImage.startsWith('http') ? ogImage : `${origin}${ogImage.startsWith('/') ? '' : '/'}${ogImage}`) : undefined;
+const robots = noindex || !live ? 'noindex, nofollow' : undefined;
+const pageNodes = schema ? (Array.isArray(schema) ? schema : [schema]) : [];
+const jsonld =
+  graph === false
+    ? null
+    : (graph ?? buildGraph({ site, businesses: config.businesses, services: config.services, extraNodes: pageNodes, locale: site.locale }));
+
+if (import.meta.env.DEV) {
+  if (fullTitle.length > seo.maxTitle) console.warn(`[@rjs/geo] ${path} : title de ${fullTitle.length} caractères (max ${seo.maxTitle}).`);
+  if (description.length > seo.maxDescription) console.warn(`[@rjs/geo] ${path} : description de ${description.length} caractères (max ${seo.maxDescription}).`);
+}
+---
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalURL} />
+{robots && <meta name="robots" content={robots} />}
+{indexing.google && <meta name="google-site-verification" content={indexing.google} />}
+{indexing.bing && <meta name="msvalidate.01" content={indexing.bing} />}
+
+<meta property="og:type" content={ogType} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+{image && <meta property="og:image" content={image} />}
+<meta property="og:locale" content={site.locale.replace('-', '_')} />
+<meta property="og:site_name" content={site.name} />
+<meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />
+
+{jsonld && <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonld)} />}
