@@ -17,3 +17,5 @@ export * from './config.js';
 export * from './robots.js';
 export { scanDist, reportScan, readPages, type ScanFinding, type ScanOptions } from './scan.js';
 export { checkLive, type LiveSite, type LiveResult } from './live.js';
+export { SearchConsole } from './google.js';
+export { BingWebmaster } from './bing.js';

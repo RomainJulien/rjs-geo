@@ -115,6 +115,9 @@ export default function rjsGeo(options: RjsGeoIntegrationOptions = {}) {
               hasProjects: cfg.llms.realisations.length > 0,
             }),
           );
+          const holes = (JSON.stringify(cfg).match(/À COMPLÉTER/g) ?? []).length;
+          if (holes && cfg.live) throw new Error(`@rjs/geo : ${holes} champ(s) « À COMPLÉTER » dans rjs.config alors que live: true. Déploiement annulé.`);
+          if (holes) console.warn(`\n📋 rjs.config : ${holes} champ(s) « À COMPLÉTER » (bloquant le jour où live passe à true).`);
           if (!cfg.live) {
             console.warn('\n🚧 Site en préparation (live: false dans rjs.config) : noindex partout, robots.txt interdit tout. Passer à true le jour du lancement.\n');
           }

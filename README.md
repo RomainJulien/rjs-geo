@@ -196,3 +196,29 @@ est le portage de `rjs check` (RJS-OPS/rjs.py), avec les seuils du pack.
 `METIER_PAGES` dans `src/config.ts` : couvreur (zingueur, charpentier), taxi
 (vtc), gite (location-saisonniere), artisan. Un métier inconnu pointe vers
 l'accueil (signalé au build). Ajouter une ligne à chaque nouvelle page métier.
+
+
+## 0.4.0 : lancement automatique et CLI unique
+
+`rjs-geo` remplace `RJS-OPS/rjs.py` (même commandes, même registre). Le
+lanceur `RJS-OPS/rjs` appelle désormais ce CLI.
+
+| Commande | Rôle |
+|---|---|
+| `init [--metier m] [--host h] [--id x]` | écrit `src/rjs.config.ts` (clé IndexNow générée, `live: false`), affiche les 3 branchements, ajoute le site au registre avec `--id` |
+| `check` / `check --live <host>` / `check <id\|all>` | garde-fou du dernier build / contrôle en production |
+| `launch <id> [--force]` | contrôle en production (bloquant), puis sitemap à Google, propriété Bing ajoutée, vérifiée, sitemap et URL soumis, IndexNow ; dates notées dans le registre (`launch`) |
+| `status <id\|all>` | sitemaps Search Console, propriété Bing, liens entrants |
+| `list`, `indexnow`, `versions`, `conseils`, `sync`, `newkey` | portefeuille, comme avant |
+
+Un champ « À COMPLÉTER » laissé dans `rjs.config` bloque le build dès que `live: true`.
+
+### Accès aux APIs (une seule fois, jamais dans un dépôt)
+
+- `~/.config/rjs-geo/google-service-account.json` : clé JSON d'un compte de
+  service Google Cloud (API « Google Search Console » activée). Ajouter son
+  adresse comme **propriétaire** de chaque propriété Search Console.
+- `~/.config/rjs-geo/bing-api-key.txt` : clé API Bing Webmaster (Paramètres >
+  Accès API), valable pour toutes les propriétés du compte.
+
+Variables possibles à la place : `RJS_GOOGLE_SA` (chemin), `RJS_BING_KEY` (clé).
